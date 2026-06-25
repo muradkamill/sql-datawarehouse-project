@@ -1,65 +1,65 @@
-do $$
-    begin
+drop table if exists bronze.crm_cust_info;
+create table bronze.crm_cust_info
+(
+    cst_id             INT,
+    cst_key            TEXT,
+    cst_firstname      TEXT,
+    cst_lastname       TEXT,
+    cst_martial_status TEXT,
+    cst_gndr           TEXT,
+    cst_create_date    DATE
+);
 
-        begin
-        copy bronze.crm_cust_info
-            from '/Users/muradkamil/Desktop/source_crm/cust_info.csv'
-            delimiter ','
-            csv header;
-        exception
-        when others then
-            raise notice 'error:%' , SQLERRM;
-        end;
+drop table if exists bronze.crm_prd_info;
+create table bronze.crm_prd_info
+(
+    prd_id       INT,
+    prd_key      TEXT,
+    prd_nm       TEXT,
+    prd_cost     INT,
+    prd_line     TEXT,
+    prd_start_dt DATE,
+    prd_end_dt   DATE
+);
 
-        begin
-        copy bronze.crm_prd_info
-            from '/Users/muradkamil/Desktop/source_crm/prd_info.csv'
-            delimiter ','
-            csv header;
-        exception
-            when others then
-                raise notice 'error:%' , SQLERRM;
-        end;
 
-        begin
-        copy bronze.crm_sales_details
-            from '/Users/muradkamil/Desktop/source_crm/sales_details.csv'
-            delimiter ','
-            csv header;
-        exception
-            when others then
-                raise notice 'error:%' , SQLERRM;
-        end;
 
-        begin
-        copy bronze.erp_cust_az12
-            from '/Users/muradkamil/Desktop/source_erp/CUST_AZ12.csv'
-            delimiter ','
-            csv header;
-        exception
-            when others then
-                raise notice 'error:%' , SQLERRM;
-        end;
+drop table if exists bronze.crm_sales_details;
+create table bronze.crm_sales_details
+(
+    sls_ord_num TEXT,
+    sls_prd_key   TEXT,
+    sls_cust_id   TEXT,
+    sls_order_dt  INT,
+    sls_ship_dt   INT,
+    sls_due_dt    INT,
+    sls_sales     INT,
+    sls_quantity  INT,
+    sls_price     INT
+);
 
-        begin
-        copy bronze.erp_loc_a101
-            from '/Users/muradkamil/Desktop/source_erp/LOC_A101.csv'
-            delimiter ','
-            csv header;
-        exception
-            when others then
-                raise notice 'error:%' , SQLERRM;
-        end;
 
-        begin
-        copy bronze.erp_px_cat_g1v2
-            from '/Users/muradkamil/Desktop/source_erp/PX_CAT_G1V2.csv'
-            delimiter '-'
-            csv header;
-        exception
-            when others then
-                raise notice 'error in erp_px_cat_g1v2 : % ' , SQLERRM;
-        end;
+drop table if exists bronze.erp_cust_az12;
+create table bronze.erp_cust_az12
+(
+    cid   TEXT,
+    bdate DATE,
+    gen   TEXT
+);
 
-end
-$$;
+drop table if exists bronze.erp_loc_a101;
+create table bronze.erp_loc_a101
+(
+    cid   TEXT,
+    cntry TEXT
+);
+
+
+drop table if exists bronze.erp_px_cat_g1v2;
+create table bronze.erp_px_cat_g1v2
+(
+    id          TEXT,
+    cat         TEXT,
+    subcat      TEXT,
+    maintenance TEXT
+);
