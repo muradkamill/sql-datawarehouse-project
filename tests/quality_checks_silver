@@ -1,0 +1,227 @@
+-- ====================================================================
+-- Checking: silver.crm_cust_info
+-- ====================================================================
+
+-- checking nulls and duplicates in primary key
+
+select
+    cst_id,
+    count(*)
+from bronze.crm_cust_info
+group by cst_id
+having count(*)>1 or cst_id is null;
+
+
+--Data Standardization & Consistency
+
+select
+    distinct  cst_martial_status
+    from bronze.crm_cust_info;
+
+
+
+
+
+
+
+
+
+
+-- ====================================================================
+-- Checking: silver.crm_prd_info
+-- ====================================================================
+
+
+select prd_id,
+       count(*)
+from bronze.crm_prd_info
+group by prd_id
+having count(*)>1;
+
+
+
+--unwanted space checking
+select *
+from bronze.crm_prd_info
+where prd_nm != trim(prd_nm);
+
+
+
+
+--checking null costs or negative numbers
+select *
+from bronze.crm_prd_info
+where prd_cost is null
+   or prd_cost < 0;
+
+
+
+--possible  product lines
+select distinct prd_line
+from bronze.crm_prd_info;
+
+
+
+
+-- checking invalid dates
+select *
+from bronze.crm_prd_info
+where prd_start_dt > prd_end_dt;
+
+
+
+
+
+
+
+
+
+-- ====================================================================
+-- Checking: silver.crm_sales_details
+-- ====================================================================
+
+--checking unwanted spaces in order number
+select *
+from bronze.crm_sales_details
+where sls_ord_num != trim(sls_ord_num);
+
+
+--checking unwanted spaces in product key
+select *
+from bronze.crm_sales_details
+where sls_prd_key != trim(sls_prd_key);
+
+
+--checking foreign keys
+select *
+from bronze.crm_sales_details
+where sls_prd_key not in (select prd_key from silver.crm_prd_info);
+
+select *
+from bronze.crm_sales_details
+where sls_cust_id not in (select cst_id::text from silver.crm_cust_info);
+
+
+--checking date issues
+select sls_due_dt
+from bronze.crm_sales_details
+where sls_due_dt > 20300101
+   or sls_due_dt < 19900101;
+
+select sls_due_dt
+from bronze.crm_sales_details
+where sls_ship_dt < 0;
+
+
+--checking invalid Order Dates
+select *
+from bronze.crm_sales_details
+where sls_order_dt > sls_ship_dt
+   or sls_order_dt > sls_due_dt;
+
+
+
+--checking data consistency
+--  sls_sales = sls_quantity * sls_price
+select *
+from bronze.crm_sales_details
+where sls_sales <> sls_quantity * sls_price
+   or sls_sales is null
+   or sls_quantity is null
+   or sls_price is null
+   or sls_sales < 0;
+
+
+--fix DDL
+drop table if exists silver.crm_sales_details;
+create table silver.crm_sales_details
+(
+    sls_ord_num TEXT,
+    sls_prd_key   TEXT,
+    sls_cust_id   INT,
+    sls_order_dt  DATE,
+    sls_ship_dt   DATE,
+    sls_due_dt    DATE,
+    sls_sales     INT,
+    sls_quantity  INT,
+    sls_price     INT,
+    dwh_create_date date default current_date
+);
+
+
+
+
+
+
+
+-- ====================================================================
+-- Checking: silver.erp_cust_az12
+-- ====================================================================
+
+
+--checking foreign key
+select
+    case
+        when cid ilike 'NAS%' then substring(cid, 4,length(cid))
+        else cid
+    end as cid,
+    bdate::date,
+    gen
+from bronze.erp_cust_az12
+where cid not in  (select cst_key from silver.crm_cust_info);
+
+
+--  checking Out-Of-Range Dates
+    select * from bronze.erp_cust_az12
+    where bdate<'1920-01-01' or bdate>current_date;
+
+
+
+
+
+-- ====================================================================
+-- Checking: silver.erp_loc_a101
+-- ====================================================================
+
+
+--checking foreign key
+select * from bronze.erp_loc_a101
+where cid not in (select cst_key from silver.crm_cust_info );
+
+
+
+--Data Standardization & Consistency
+select distinct cntry from bronze.erp_loc_a101;
+
+
+
+
+
+
+
+
+
+
+-- ====================================================================
+-- Checking: silver.erp_px_cat_g1v2
+-- ====================================================================
+
+
+
+-- checking unwanted values
+select distinct maintenance from bronze.erp_px_cat_g1v2;
+select distinct cat from bronze.erp_px_cat_g1v2;
+
+--checking foreign key
+select * from bronze.erp_px_cat_g1v2
+where id not in (select cat_id from silver.crm_prd_info)\
+
+--checking unwanted spaces
+select * from bronze.erp_px_cat_g1v2
+where cat != trim(cat);
+
+select * from bronze.erp_px_cat_g1v2
+where subcat != trim(subcat);
+
+select * from bronze.erp_px_cat_g1v2
+where maintenance != trim(maintenance);
